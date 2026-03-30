@@ -3,6 +3,7 @@ import sys
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseEvent
 import pygame
+import math
 
 
 def charger_grille(nom_fichier: str) -> list[list[int]]:
@@ -334,8 +335,7 @@ def echange_correct(l1, c1, l2, c2):
     """
     if l1-l2 == 0 and c1-c2 == 0 :
         return False
-    return abs(l1-l2) <= 1 and abs(c1-c2) <= 1
-    
+    return math.sqrt((l1-l2)**2+(c1-c2)**2) <= 1    
 
 
 def supprimer_bonbons_alignes(grille: list[list[int]], alignements: set[tuple[int]]) :
