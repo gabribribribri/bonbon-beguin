@@ -34,7 +34,7 @@ def affichage_grille_terminal(grille: list[list[int]]):
     """
     Affiche la grille dans la console pour le debug.
     entrée :
-        - grille : (list[list[int]]) 
+        - grille (list[list[int]]) 
     sortie :
         - None 
     """
@@ -62,7 +62,7 @@ def affichage_grille_matplotlib(grille: list[list[int]], points: int, tours: int
     """
     Affiche la grille en utilisant matplotlib
     entrée :
-        - grille : (list[list[int]]) 
+        - grille (list[list[int]]) 
     sortie :
         - None 
     """
@@ -120,68 +120,77 @@ def echanger_bonbons(grille: list[list[int]], l1: int, c1: int, l2: int, c2: int
     """
     Intervertit les positions de deux bonbons ciblés dans la grille.
     entrée : 
-        - grille : (list[list[int]]) 
-        - l1 : int
-        - c1 : int
-        - l2 : int
-        - c2 : int
+        - grille (list[list[int]]) 
+        - l1 (int)
+        - c1 (int)
+        - l2 (int)
+        - c2 (int)
     """
     grille[l1][c1], grille[l2][c2] = grille[l2][c2], grille[l1][c1]
 
 
-def detecter_alignements(grille: list[list[int]]): # decouverte des ensembles c'est une dinguerie
+def detecter_alignements(grille: list[list[int]]) -> set[tuple[int]] : # decouverte des ensembles c'est une dinguerie
     """
     Détecte les alignements horizontaux et verticaux de 3 bonbons ou plus, en ligne ou en colonne.
     entrée :
-        - grille : (list[list[int]]) 
+        - grille (list[list[int]]) : la grille
     sortie :
-        - a_supprimer : (set[tuple[int]])
+        - a_supprimer (set[tuple[int]]) : coord des bonbons à supprimer
     """
     a_supprimer = set()
     nb_lignes = len(grille)
     nb_colonnes = len(grille[0])
 
     # horizontal
-    for l in range(nb_lignes):
-        c = 0
-        while c < nb_colonnes:
-            valeur_actuelle = grille[l][c]
-            if valeur_actuelle != -1:
-                debut = c
-                while c < nb_colonnes and grille[l][c] == valeur_actuelle:
-                    c += 1
-                longueur = c - debut
-                if longueur >= 3:
-                    for i in range(debut, c):
-                        a_supprimer.add((l, i))
-            else:
-                c += 1
-
+    for y in range(0, nb_lignes) :
+        for x in range(0, nb_colonnes-2) :
+            if grille[y][x] == grille[y][x+1] == grille[y][x+2] :
+                a_supprimer |= chunk_meme_couleur(grille, (y, x))
+    
     # vertical
-    for j in range(nb_colonnes):
-        l = 0
-        while l < nb_lignes:
-            valeur_actuelle = grille[l][j]
-            if valeur_actuelle != -1:
-                debut = l
-                while l < nb_lignes and grille[l][j] == valeur_actuelle:
-                    l += 1
-                
-                longueur = l - debut
-                if longueur >= 3:
-                    for i in range(debut, l):
-                        a_supprimer.add((i, j))
-            else:
-                l += 1
+    for x in range(0, nb_colonnes) :
+        for y in range(0, nb_lignes-2) :
+            if grille[y][x] == grille[y+1][x] == grille[y+2][x] :
+                a_supprimer |= chunk_meme_couleur(grille, (y, x))
 
     return a_supprimer
+
+
+def chunk_meme_couleur(grille: list[list[int]], case: tuple[int]) -> set[tuple[int]] :
+    """
+    Trouve et renvoie les coordonnées de toutes les cases de mêmes couleurs adjacentes entre elles
+
+    entrée :
+        - grille : (list[list[int]])
+        - case (tuple[int]) : la case à partir de laquelle partir
+    sortie :
+        - chunk : (set[tuple[int]]) : Les coord du bloc
+    """
+    chunk = set()
+    a_check = set()
+    a_check.add(case)
+    couleur = grille[case[0]][case[1]]
+    nouveau_a_trouver = True
+    while nouveau_a_trouver :
+        new_a_check = set()
+        nouveau_a_trouver = False
+        for el in a_check :
+            if grille[el[0]][el[1]] == couleur and el not in chunk :
+                nouveau_a_trouver = True
+                chunk.add(el)
+                for (y, x) in [[1, 0], [-1, 0], [0, 1], [0, -1]] :
+                    y += el[0]; x += el[1]
+                    if x >= 0 and y >= 0 and x < len(grille[0]) and y < len(grille) :
+                        new_a_check.add((y, x))
+                a_check = new_a_check
+    return chunk
+        
 
 def faire_tomber_bonbons(grille: list[list[int]]):
     """
     Fais descendre les bonbons.
     entrée : 
-        - grille : (list[list[int]]) 
-        - nb_types : int
+        - grille (list[list[int]]) 
     sortie :
         - None
     """
@@ -386,7 +395,6 @@ def bonbon_beguin_matplotlib(nom_fichier: str, nb_tours: int):
 
         affichage_grille_matplotlib(grille, points, tours_restants)        
         alignements = detecter_alignements(grille) #regarde s'il y a des alignements après l'échange
-        print(alignements)
         
         if len(alignements) == 0 :
             print("Coup inutile, ça ne sert à rien.")
