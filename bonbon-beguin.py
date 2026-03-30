@@ -1,5 +1,8 @@
 import random
+import sys
 import matplotlib.pyplot as plt
+from matplotlib.backend_bases import MouseEvent
+import pygame
 
 
 def charger_grille(nom_fichier: str) -> list[list[int]]:
@@ -53,9 +56,9 @@ def affichage_grille_terminal(grille: list[list[int]]):
                 print(f"{case} ", end="")
         print()
     print()
-    
+    plt.pause(0.3)
 
-def affichage_grille_matplot(grille: list[list[int]]) :
+def affichage_grille_matplotlib(grille: list[list[int]], points: int, tours: int) :
     """
     Affiche la grille en utilisant matplotlib
     entrée :
@@ -101,9 +104,15 @@ def affichage_grille_matplot(grille: list[list[int]]) :
     ax.set_ylim(-0.5, nb_lignes - 0.5)
     ax.set_aspect('equal')
     
-    plt.title("Bonbon Beguin de Gabriel²", color='purple', pad=20)
-    plt.pause(0.1)
+    plt.title(f"Bonbon Beguin de Gabriel² \nPoints : {points}\nTours restants : {tours}", color='purple', pad=20)
+    
+    if points >= 50:
+        plt.title(f"GAGNÉ!!! \nScore : {points}\nTours restants : {tours}", color='red', fontsize=20, fontweight='bold')
+    elif tours <= 0:
+        plt.title(f"GAME OVER\nScore Final : {points}", color='black', fontsize=20)
+    
     plt.draw()
+    plt.pause(0.4)
     
 
 
@@ -242,9 +251,9 @@ def entree_utilisateur() -> tuple[int] :
 
 
 
-def bonbon_beguin(nom_fichier: str, nb_iter: int):
+def bonbon_beguin_terminal(nom_fichier: str, nb_iter: int):
     """
-    Fonction principale pilotant les tours de jeu, les saisies et les cascades.
+    Fonction principale pilotant les tours de jeu, les saisies et les cascades sur le terminal
     entrée :
         - nom_ficher (str) : nom du fichier à ouvrir
         - nb_iter (int) : nombre d'itérations à effectuer
@@ -258,15 +267,17 @@ def bonbon_beguin(nom_fichier: str, nb_iter: int):
         print("Ah bah non en fait")
         return 
 
-    plt.ion() #mode interactif pour l'affichage graphique sinon ça freeze et poof ça marche pas (la doc encore)
-    
+
+    case_debut_sel = (0, 0)
+    case_fin_sel = (0, 0)
+   
 
     #comme ça on peut s'adapter pour n'importe quel fichier csv
     nb_types = max_de_grille(grille) + 1
+
     
     for t in range(nb_iter):
         affichage_grille_terminal(grille)
-        affichage_grille_matplot(grille)
         print("\n--- TOUR", t + 1, "/", nb_iter, "---")
         
         #commentaire qui sert pas mais juste pour dire que c'est propre putain je passe une aprem de merde
@@ -286,17 +297,12 @@ def bonbon_beguin(nom_fichier: str, nb_iter: int):
                 
                 # animation parce que bg stylé (à améliorer mais c'est chiant)
                 affichage_grille_terminal(grille)
-                affichage_grille_matplot(grille)
-                plt.pause(0.3)
                 
                 faire_tomber_bonbons(grille)
                 affichage_grille_terminal(grille)
-                affichage_grille_matplot(grille)
-                plt.pause(0.3)
 
                 populer_cases_vides(grille, nb_types)
                 affichage_grille_terminal(grille)
-                affichage_grille_matplot(grille)
                 alignements = detecter_alignements(grille)
         else:
             print("Coup inutile, T con !")
@@ -305,6 +311,119 @@ def bonbon_beguin(nom_fichier: str, nb_iter: int):
     plt.ioff()
     plt.show()
 
+
+def echange_correct(l1, c1, l2, c2):
+    """
+    Vérifie si les entrées de l'utilisateur sont correctes et que l'échange peut être réalisé
+    Entrées :
+        - l1 (int) : ligne de la première case
+        - c1 (int) : colonne de la première case
+        - l2 (int) : ligne de la seconde case
+        - c2 (int) : colonne de la seconde case
+    Sortie :
+        - booléen 
+    """
+    if l1-l2 == 0 and c1-c2 == 0 :
+        return False
+    return abs(l1-l2) <= 1 and abs(c1-c2) <= 1
+    
+
+
+def supprimer_bonbons_alignes(grille: list[list[int]], alignements: set[tuple[int]]) :
+    """
+    Entrées :
+        - grille (list[list[int]]) : la grille de jeu
+        - alignements (set[tuple[int]]) : coordonnées des cases à supprimer
+    """
+    for coord in alignements:
+        (ligne, colonne) = coord
+        grille[ligne][colonne] = -1
+
+
+def bonbon_beguin_matplotlib(nom_fichier: str, nb_tours: int):
+    """
+    Fonction principale pilotant les tours de jeu, les saisies et les cascades avec une interface matplotlib
+    entrée :
+        - nom_ficher (str) : nom du fichier à ouvrir
+        - nb_iter (int) : nombre d'itérations à effectuer
+    sortie :
+        - None
+    """
+
+    # Audio pour les règles
+    pygame.mixer.init()
+    pygame.mixer.music.load("manumaregle1.mp3")
+    pygame.mixer.music.play()
+
+    grille = charger_grille(nom_fichier)
+    points = 0
+    tours_restants = nb_tours
+    case_debut_sel = [0, 0]
+    nb_types = max_de_grille(grille) + 1 # type de mines différentes dans le csv  
+
+    plt.ion() # mode interactif pour l'affichage graphique sinon ça freeze et poof ça marche pas (la doc encore)
+
+    def sur_presse_clique(event: MouseEvent) :
+        nonlocal case_debut_sel
+        case_debut_sel = (len(grille) - 1 - round(event.ydata), round(event.xdata))
+
+    def sur_lachee_clique(event: MouseEvent) :
+        nonlocal points, grille, tours_restants
+        if event.inaxes is None :
+            print("Dans la grille stp")
+            return
+        case_fin_sel = (len(grille) - 1 - round(event.ydata), round(event.xdata))
+
+        if tours_restants == 0 :
+            print("Plus de tours restants !")
+            return
+
+        if not echange_correct(case_debut_sel[0], case_debut_sel[1], case_fin_sel[0], case_fin_sel[1]) :
+            print("Cet échange ne peut pas avoir lieu")
+            return
+
+        echanger_bonbons(grille, case_debut_sel[0], case_debut_sel[1], case_fin_sel[0], case_fin_sel[1])
+
+        affichage_grille_matplotlib(grille, points, tours_restants)        
+        alignements = detecter_alignements(grille) #regarde s'il y a des alignements après l'échange
+        print(alignements)
+        
+        if len(alignements) == 0 :
+            print("Coup inutile, ça ne sert à rien.")
+            echanger_bonbons(grille, case_debut_sel[0], case_debut_sel[1], case_fin_sel[0], case_fin_sel[1])
+            affichage_grille_matplotlib(grille, points, tours_restants)
+            return
+
+        tours_restants -= 1
+        
+        while len(alignements) > 0:
+            points += len(alignements)
+
+            supprimer_bonbons_alignes(grille, alignements)
+            affichage_grille_matplotlib(grille, points, tours_restants)                
+                
+            faire_tomber_bonbons(grille)
+            affichage_grille_matplotlib(grille, points, tours_restants)            
+
+            populer_cases_vides(grille, nb_types)
+            affichage_grille_matplotlib(grille, points, tours_restants)
+                
+            alignements = detecter_alignements(grille)
+            
+
+
+    fig = plt.gcf()
+    fig.canvas.mpl_connect("button_press_event", sur_presse_clique)
+    fig.canvas.mpl_connect("button_release_event", sur_lachee_clique)
+
+    affichage_grille_matplotlib(grille, points, tours_restants)
+        
+    plt.ioff()
+    plt.show()
+
 if __name__ == "__main__":
-    bonbon_beguin("exemple_grille.csv", 10)
+    if len(sys.argv) >= 2 and sys.argv[1] in ["term", "terminal", "tui", "cli"] :
+        bonbon_beguin_terminal("exemple_grille.csv", 10)
+    else :
+        bonbon_beguin_matplotlib("exemple_grille.csv", 10)
     
