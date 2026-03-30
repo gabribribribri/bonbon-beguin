@@ -126,6 +126,8 @@ def echanger_bonbons(grille: list[list[int]], l1: int, c1: int, l2: int, c2: int
         - c1 (int)
         - l2 (int)
         - c2 (int)
+
+    complexité : O(1)
     """
     grille[l1][c1], grille[l2][c2] = grille[l2][c2], grille[l1][c1]
 
@@ -137,6 +139,7 @@ def detecter_alignements(grille: list[list[int]]) -> set[tuple[int]] : # decouve
         - grille (list[list[int]]) : la grille
     sortie :
         - a_supprimer (set[tuple[int]]) : coord des bonbons à supprimer
+    complexité : O(2n)
     """
     a_supprimer = set()
     nb_lignes = len(grille)
@@ -166,6 +169,9 @@ def chunk_meme_couleur(grille: list[list[int]], case: tuple[int]) -> set[tuple[i
         - case (tuple[int]) : la case à partir de laquelle partir
     sortie :
         - chunk : (set[tuple[int]]) : Les coord du bloc
+    complexité :
+        - meilleur cas : O(1)
+        - pire cas :     O(n)
     """
     chunk = set()
     a_check = set()
@@ -194,6 +200,9 @@ def faire_tomber_bonbons(grille: list[list[int]]):
         - grille (list[list[int]]) 
     sortie :
         - None
+    complexité :
+        - meilleur cas : O(1)
+        - pire cas :     O(n)
     """
     # la gravité fonctionne dans l'autre sens. désolé Newton.
     nb_lignes, nb_colonnes = len(grille), len(grille[0])
@@ -213,6 +222,9 @@ def populer_cases_vides(grille, nb_types) :
     entrées :
         - grille (list[list[int]]) : la grille
         - nb_types (int) : nombre de différents types de bonbons
+    complexité :
+        - meilleur cas : O(1)
+        - pire cas :     O(n)
     """
     nb_lignes, nb_colonnes = len(grille), len(grille[0])
     for colonne in range(nb_colonnes) :
@@ -228,6 +240,7 @@ def max_de_grille(grille: list[list[int]]) -> int :
         - grille (list[list[int]]) : la grille
     sortie :
         - maximum (int) : le maximum
+    complexité : O(n)
     """
     maximum = 0
     for ligne in grille:
@@ -276,11 +289,6 @@ def bonbon_beguin_terminal(nom_fichier: str, nb_iter: int):
     if not grille:
         print("Ah bah non en fait")
         return 
-
-
-    case_debut_sel = (0, 0)
-    case_fin_sel = (0, 0)
-   
 
     #comme ça on peut s'adapter pour n'importe quel fichier csv
     nb_types = max_de_grille(grille) + 1
@@ -332,6 +340,7 @@ def echange_correct(l1, c1, l2, c2):
         - c2 (int) : colonne de la seconde case
     Sortie :
         - booléen 
+    complexité : O(1)
     """
     if l1-l2 == 0 and c1-c2 == 0 :
         return False
@@ -340,9 +349,10 @@ def echange_correct(l1, c1, l2, c2):
 
 def supprimer_bonbons_alignes(grille: list[list[int]], alignements: set[tuple[int]]) :
     """
-    Entrées :
+    entrée :
         - grille (list[list[int]]) : la grille de jeu
         - alignements (set[tuple[int]]) : coordonnées des cases à supprimer
+    complexité : O(n)
     """
     for coord in alignements:
         (ligne, colonne) = coord
