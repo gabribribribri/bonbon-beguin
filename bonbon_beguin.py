@@ -2,9 +2,13 @@ import random
 import sys
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseEvent
-import pygame
 import math
-
+try :
+    import pygame
+    PYGAME_IMPORTED = True
+except ImportError:
+    PYGAME_IMPORTED = False
+    print("/!\\ pygame n'a pas pu être importé. Emmanuel Macron ne vous expliquera pas les rîgles /!\\")
 
 def charger_grille(nom_fichier: str) -> list[list[int]]:
     """
@@ -370,9 +374,10 @@ def bonbon_beguin_matplotlib(nom_fichier: str, nb_tours: int):
     """
 
     # Audio pour les règles
-    pygame.mixer.init()
-    pygame.mixer.music.load("manumaregle1.mp3")
-    pygame.mixer.music.play()
+    if PYGAME_IMPORTED :
+        pygame.mixer.init()
+        pygame.mixer.music.load("manumaregle1.mp3")
+        pygame.mixer.music.play()
 
     grille = charger_grille(nom_fichier)
     points = 0
